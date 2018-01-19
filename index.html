@@ -1,0 +1,35 @@
+<html>
+    <head>
+        <title>PeerJS Example</title>
+
+        <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+        <link rel="stylesheet" href="./style.css">
+
+        <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
+        <script src="./app.js"></script>
+    </head>
+
+    <body>
+        
+        <header class="app_header">
+            <h1 class="app_title">PeerConnect</h1>
+        </header>
+
+        <div class="main" align="center">
+            <div>
+                Your ID is : <span id="my_id"></span>
+            </div>
+            <div>
+                <h3>To connect to other peers:</h3>
+                <div>
+                    <input class="input" type="text" id="peer_id" value="" placeholder="Input other peers ID" onkeydown="handleKeyPress(event,'connect')"/>
+                    <button class="button" id="connect-button" onclick="peerApp.sendConnectionRequest()">Connect</button>
+                </div>
+            </div>
+    
+            <div id="connections"></div>
+
+        </div>
+
+    </body>
+</html>
