@@ -1,3 +1,12 @@
+// Normalize the various vendor prefixed versions of getUserMedia.
+navigator.getUserMedia = (navigator.getUserMedia ||
+    navigator.webkitGetUserMedia ||
+    navigator.mozGetUserMedia || 
+    navigator.msGetUserMedia);
+
+// https://stackoverflow.com/questions/11381673/detecting-a-mobile-browser
+let isMobile = typeof window.orientation !== 'undefined' ? true : false;
+
 var peer = new Peer({key: 'pxozm43r369ftj4i'});
 
 // Just to have an object containing connectedPeers so that when you connect to a peer that is already connected, you can make an error
@@ -11,6 +20,44 @@ var peerApp = {
         });
         // WHEN YOU RECEIVES A CONNECTION FROM OTHER PEER
         peer.on('connection', peerApp.connect);
+
+        // WHEN YOU RECEIVES A CALL
+        peer.on('call', (call)=>{
+            if(!isMobile){
+                navigator.getUserMedia({audio: true, video: true}, (stream)=>{
+                    let call = peer.call(conn.peer, stream);
+                    call.answer(stream); 
+                    // Wait for stream on the call, then set peer video display
+                    call.on('stream', (peerStream)=>{
+                        document.getElementById('their-video').setAttribute('src', URL.createObjectURL(peerStream));
+                    });
+                    // Set your video displays
+                    document.getElementById('my-video').setAttribute('src', URL.createObjectURL(stream));
+                }, (err)=>{ 
+                    alert(err);
+                });
+    
+            }else{
+                alert('Receive on smartphone');
+                // FOR CHROME ANDROID
+                // user means front cam
+                // environment means back camera
+                navigator.mediaDevices.getUserMedia({video: {facingMode: {exact: 'user'}}})
+                    .then(stream=>{
+                        let call = peer.call(conn.peer, stream);
+                    
+                        // Wait for stream on the call, then set peer video display
+                        call.on('stream', (peerStream)=>{
+                            document.getElementById('their-video').setAttribute('src', URL.createObjectURL(peerStream));
+                        });
+                        // Set your video displays
+                        document.getElementById('my-video').setAttribute('src', URL.createObjectURL(stream));
+                    }).catch(err=>{
+                        alert(err);
+                    });
+            }
+    
+        });
 
         // WHEN SOMETHING ERROR HAPPENS
         peer.on('error', (err)=>{
@@ -38,15 +85,13 @@ var peerApp = {
     sendConnectionRequest: ()=>{
         const peer_id = document.getElementById('peer_id').value;
         if(!connectedPeers[peer_id]){
-            let connectButton = document.getElementById('connect-button');
             // START CONNECTION TO THE OTHER PEER
             let conn = peer.connect(peer_id);
-            connectButton.disabled = true;
-            
+
             // TRIGGERS WHEN CONNECTION IS SUCCESSFUL
             conn.on('open', ()=>{
-                connectButton.disabled = false;
                 peerApp.connect(conn);
+                document.getElementById('peer_id').value = '';
             });
         }else{
             alert(`You already have a connection with ${peer_id}`);
@@ -59,6 +104,7 @@ var peerApp = {
         <div class="chatbox" id="chatbox-${conn.peer}">
             <div class="chatbox-header">
                 <span>Chatting with ${conn.peer}</span>
+                <button id='call-button-${conn.peer}'>C</button>
                 <button class="push-right" id='disconnect-button-${conn.peer}'>X</button>
             </div>
             <div class="chatbox-body">
@@ -83,6 +129,10 @@ var peerApp = {
             document.getElementById(`disconnect-button-${conn.peer}`).onclick = ()=>{
                 peerApp.disconnect(conn);
             }
+            // Bind an onclick to the call button so that you can pass the conn object to the call function
+            document.getElementById(`call-button-${conn.peer}`).onclick = ()=>{
+                peerApp.call(conn);
+            }
             // Bind an onkeydown to the send button so that you can pass the conn object to the sendMessage function
             document.getElementById(`message-input-${conn.peer}`).onkeydown = ()=>{
                 handleKeyPress(event,'send', conn);
@@ -91,6 +141,43 @@ var peerApp = {
 
         // Append Chatbox to Connections 
         document.getElementById('connections').innerHTML += chatbox;
+    },
+    call: (conn)=>{
+        // Initiate a call!
+        if(!isMobile){
+            navigator.getUserMedia({audio: true, video: true}, (stream)=>{
+                let call = peer.call(conn.peer, stream);
+                
+                // Wait for stream on the call, then set peer video display
+                call.on('stream', (peerStream)=>{
+                    document.getElementById('their-video').setAttribute('src', URL.createObjectURL(peerStream));
+                });
+                // Set your video displays
+                document.getElementById('my-video').setAttribute('src', URL.createObjectURL(stream));
+            }, (err)=>{ 
+                alert(err);
+            });
+
+        }else{
+            alert('Calling from smartphone');
+            // FOR CHROME ANDROID
+            // user means front cam
+            // environment means back camera
+            navigator.mediaDevices.getUserMedia({video: {facingMode: {exact: 'user'}}})
+                .then(stream=>{
+                    let call = peer.call(conn.peer, stream);
+                
+                    // Wait for stream on the call, then set peer video display
+                    call.on('stream', (peerStream)=>{
+                        document.getElementById('their-video').setAttribute('src', URL.createObjectURL(peerStream));
+                    });
+                    // Set your video displays
+                    document.getElementById('my-video').setAttribute('src', URL.createObjectURL(stream));
+                }).catch(err=>{
+                    alert(err);
+                });
+        }
+
     },
     sendMessage: (conn)=>{
         let message  = document.getElementById(`message-input-${conn.peer}`).value;

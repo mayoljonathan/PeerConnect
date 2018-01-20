@@ -23,11 +23,17 @@
                 <h3>To connect to other peers:</h3>
                 <div>
                     <input class="input" type="text" id="peer_id" value="" placeholder="Input other peers ID" onkeydown="handleKeyPress(event,'connect')"/>
-                    <button class="button" id="connect-button" onclick="peerApp.sendConnectionRequest()">Connect</button>
+                    <button class="button" onclick="peerApp.sendConnectionRequest()">Connect</button>
                 </div>
             </div>
     
             <div id="connections"></div>
+
+            <!-- Video area -->
+            <div id="video-container">
+                <video id="their-video" autoplay></video>
+                <video id="my-video" muted="true" autoplay></video>
+            </div>
 
         </div>
 
